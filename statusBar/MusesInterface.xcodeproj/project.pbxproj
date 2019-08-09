@@ -1,0 +1,615 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8DD35BC622FC3C500025F862 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD35BC522FC3C500025F862 /* AppDelegate.swift */; };
+		8DD35BC822FC3C500025F862 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD35BC722FC3C500025F862 /* ViewController.swift */; };
+		8DD35BCA22FC3C510025F862 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DD35BC922FC3C510025F862 /* Assets.xcassets */; };
+		8DD35BCD22FC3C510025F862 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8DD35BCB22FC3C510025F862 /* Main.storyboard */; };
+		8DD35BD922FC3C510025F862 /* MusesInterfaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD35BD822FC3C510025F862 /* MusesInterfaceTests.swift */; };
+		8DD35BE422FC3C510025F862 /* MusesInterfaceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DD35BE322FC3C510025F862 /* MusesInterfaceUITests.swift */; };
+		8DD35BF622FC505B0025F862 /* wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 8DD35BF522FC505B0025F862 /* wrapper.c */; };
+		8DD35BF922FC6CA60025F862 /* libmuses_driver.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DD35BF822FC6CA60025F862 /* libmuses_driver.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8DD35BD522FC3C510025F862 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8DD35BBA22FC3C500025F862 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DD35BC122FC3C500025F862;
+			remoteInfo = MusesInterface;
+		};
+		8DD35BE022FC3C510025F862 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8DD35BBA22FC3C500025F862 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DD35BC122FC3C500025F862;
+			remoteInfo = MusesInterface;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		8DD35BC222FC3C500025F862 /* MusesInterface.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusesInterface.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD35BC522FC3C500025F862 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		8DD35BC722FC3C500025F862 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		8DD35BC922FC3C510025F862 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8DD35BCC22FC3C510025F862 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		8DD35BCE22FC3C510025F862 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8DD35BCF22FC3C510025F862 /* MusesInterface.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MusesInterface.entitlements; sourceTree = "<group>"; };
+		8DD35BD422FC3C510025F862 /* MusesInterfaceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusesInterfaceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD35BD822FC3C510025F862 /* MusesInterfaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusesInterfaceTests.swift; sourceTree = "<group>"; };
+		8DD35BDA22FC3C510025F862 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8DD35BDF22FC3C510025F862 /* MusesInterfaceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusesInterfaceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD35BE322FC3C510025F862 /* MusesInterfaceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusesInterfaceUITests.swift; sourceTree = "<group>"; };
+		8DD35BE522FC3C510025F862 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		8DD35BF322FC505A0025F862 /* MusesInterface-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MusesInterface-Bridging-Header.h"; sourceTree = "<group>"; };
+		8DD35BF422FC505B0025F862 /* wrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wrapper.h; sourceTree = "<group>"; };
+		8DD35BF522FC505B0025F862 /* wrapper.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = wrapper.c; sourceTree = "<group>"; };
+		8DD35BF822FC6CA60025F862 /* libmuses_driver.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmuses_driver.a; path = ../../dev/audio/muses_driver/target/debug/libmuses_driver.a; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8DD35BBF22FC3C500025F862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD35BF922FC6CA60025F862 /* libmuses_driver.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BD122FC3C510025F862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BDC22FC3C510025F862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8DD35BB922FC3C500025F862 = {
+			isa = PBXGroup;
+			children = (
+				8DD35BC422FC3C500025F862 /* MusesInterface */,
+				8DD35BD722FC3C510025F862 /* MusesInterfaceTests */,
+				8DD35BE222FC3C510025F862 /* MusesInterfaceUITests */,
+				8DD35BC322FC3C500025F862 /* Products */,
+				8DD35BF722FC6CA50025F862 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		8DD35BC322FC3C500025F862 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD35BC222FC3C500025F862 /* MusesInterface.app */,
+				8DD35BD422FC3C510025F862 /* MusesInterfaceTests.xctest */,
+				8DD35BDF22FC3C510025F862 /* MusesInterfaceUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8DD35BC422FC3C500025F862 /* MusesInterface */ = {
+			isa = PBXGroup;
+			children = (
+				8DD35BC522FC3C500025F862 /* AppDelegate.swift */,
+				8DD35BF422FC505B0025F862 /* wrapper.h */,
+				8DD35BF522FC505B0025F862 /* wrapper.c */,
+				8DD35BC722FC3C500025F862 /* ViewController.swift */,
+				8DD35BC922FC3C510025F862 /* Assets.xcassets */,
+				8DD35BCB22FC3C510025F862 /* Main.storyboard */,
+				8DD35BCE22FC3C510025F862 /* Info.plist */,
+				8DD35BCF22FC3C510025F862 /* MusesInterface.entitlements */,
+				8DD35BF322FC505A0025F862 /* MusesInterface-Bridging-Header.h */,
+			);
+			path = MusesInterface;
+			sourceTree = "<group>";
+		};
+		8DD35BD722FC3C510025F862 /* MusesInterfaceTests */ = {
+			isa = PBXGroup;
+			children = (
+				8DD35BD822FC3C510025F862 /* MusesInterfaceTests.swift */,
+				8DD35BDA22FC3C510025F862 /* Info.plist */,
+			);
+			path = MusesInterfaceTests;
+			sourceTree = "<group>";
+		};
+		8DD35BE222FC3C510025F862 /* MusesInterfaceUITests */ = {
+			isa = PBXGroup;
+			children = (
+				8DD35BE322FC3C510025F862 /* MusesInterfaceUITests.swift */,
+				8DD35BE522FC3C510025F862 /* Info.plist */,
+			);
+			path = MusesInterfaceUITests;
+			sourceTree = "<group>";
+		};
+		8DD35BF722FC6CA50025F862 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8DD35BF822FC6CA60025F862 /* libmuses_driver.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8DD35BC122FC3C500025F862 /* MusesInterface */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8DD35BE822FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterface" */;
+			buildPhases = (
+				8DD35BBE22FC3C500025F862 /* Sources */,
+				8DD35BBF22FC3C500025F862 /* Frameworks */,
+				8DD35BC022FC3C500025F862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MusesInterface;
+			productName = MusesInterface;
+			productReference = 8DD35BC222FC3C500025F862 /* MusesInterface.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8DD35BD322FC3C510025F862 /* MusesInterfaceTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8DD35BEB22FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterfaceTests" */;
+			buildPhases = (
+				8DD35BD022FC3C510025F862 /* Sources */,
+				8DD35BD122FC3C510025F862 /* Frameworks */,
+				8DD35BD222FC3C510025F862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8DD35BD622FC3C510025F862 /* PBXTargetDependency */,
+			);
+			name = MusesInterfaceTests;
+			productName = MusesInterfaceTests;
+			productReference = 8DD35BD422FC3C510025F862 /* MusesInterfaceTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		8DD35BDE22FC3C510025F862 /* MusesInterfaceUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8DD35BEE22FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterfaceUITests" */;
+			buildPhases = (
+				8DD35BDB22FC3C510025F862 /* Sources */,
+				8DD35BDC22FC3C510025F862 /* Frameworks */,
+				8DD35BDD22FC3C510025F862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8DD35BE122FC3C510025F862 /* PBXTargetDependency */,
+			);
+			name = MusesInterfaceUITests;
+			productName = MusesInterfaceUITests;
+			productReference = 8DD35BDF22FC3C510025F862 /* MusesInterfaceUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8DD35BBA22FC3C500025F862 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1030;
+				LastUpgradeCheck = 1030;
+				ORGANIZATIONNAME = "Benedict Gaster";
+				TargetAttributes = {
+					8DD35BC122FC3C500025F862 = {
+						CreatedOnToolsVersion = 10.3;
+						LastSwiftMigration = 1030;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 0;
+							};
+						};
+					};
+					8DD35BD322FC3C510025F862 = {
+						CreatedOnToolsVersion = 10.3;
+						TestTargetID = 8DD35BC122FC3C500025F862;
+					};
+					8DD35BDE22FC3C510025F862 = {
+						CreatedOnToolsVersion = 10.3;
+						TestTargetID = 8DD35BC122FC3C500025F862;
+					};
+				};
+			};
+			buildConfigurationList = 8DD35BBD22FC3C500025F862 /* Build configuration list for PBXProject "MusesInterface" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8DD35BB922FC3C500025F862;
+			productRefGroup = 8DD35BC322FC3C500025F862 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8DD35BC122FC3C500025F862 /* MusesInterface */,
+				8DD35BD322FC3C510025F862 /* MusesInterfaceTests */,
+				8DD35BDE22FC3C510025F862 /* MusesInterfaceUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8DD35BC022FC3C500025F862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD35BCA22FC3C510025F862 /* Assets.xcassets in Resources */,
+				8DD35BCD22FC3C510025F862 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BD222FC3C510025F862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BDD22FC3C510025F862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8DD35BBE22FC3C500025F862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD35BC822FC3C500025F862 /* ViewController.swift in Sources */,
+				8DD35BF622FC505B0025F862 /* wrapper.c in Sources */,
+				8DD35BC622FC3C500025F862 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BD022FC3C510025F862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD35BD922FC3C510025F862 /* MusesInterfaceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD35BDB22FC3C510025F862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD35BE422FC3C510025F862 /* MusesInterfaceUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8DD35BD622FC3C510025F862 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8DD35BC122FC3C500025F862 /* MusesInterface */;
+			targetProxy = 8DD35BD522FC3C510025F862 /* PBXContainerItemProxy */;
+		};
+		8DD35BE122FC3C510025F862 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8DD35BC122FC3C500025F862 /* MusesInterface */;
+			targetProxy = 8DD35BE022FC3C510025F862 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		8DD35BCB22FC3C510025F862 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				8DD35BCC22FC3C510025F862 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		8DD35BE622FC3C510025F862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8DD35BE722FC3C510025F862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		8DD35BE922FC3C510025F862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterface/Info.plist;
+				INSTALL_GROUP = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-L",
+					../target/debug,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterface;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MusesInterface/MusesInterface-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		8DD35BEA22FC3C510025F862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterface/Info.plist;
+				INSTALL_GROUP = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-L",
+					../target/release,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterface;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MusesInterface/MusesInterface-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		8DD35BEC22FC3C510025F862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterfaceTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterfaceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MusesInterface.app/Contents/MacOS/MusesInterface";
+			};
+			name = Debug;
+		};
+		8DD35BED22FC3C510025F862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterfaceTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterfaceTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MusesInterface.app/Contents/MacOS/MusesInterface";
+			};
+			name = Release;
+		};
+		8DD35BEF22FC3C510025F862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterfaceUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterfaceUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MusesInterface;
+			};
+			name = Debug;
+		};
+		8DD35BF022FC3C510025F862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MusesInterfaceUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterfaceUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MusesInterface;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8DD35BBD22FC3C500025F862 /* Build configuration list for PBXProject "MusesInterface" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8DD35BE622FC3C510025F862 /* Debug */,
+				8DD35BE722FC3C510025F862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8DD35BE822FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterface" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8DD35BE922FC3C510025F862 /* Debug */,
+				8DD35BEA22FC3C510025F862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8DD35BEB22FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterfaceTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8DD35BEC22FC3C510025F862 /* Debug */,
+				8DD35BED22FC3C510025F862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8DD35BEE22FC3C510025F862 /* Build configuration list for PBXNativeTarget "MusesInterfaceUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8DD35BEF22FC3C510025F862 /* Debug */,
+				8DD35BF022FC3C510025F862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8DD35BBA22FC3C500025F862 /* Project object */;
+}

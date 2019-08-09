@@ -1,0 +1,16 @@
+[package]
+name = "muses_driver"
+version = "0.1.0"
+authors = ["Benedict Gaster <benedict.gaster@uwe.ac.uk>"]
+edition = "2018"
+
+[lib]
+name = "muses_driver"
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+serialport = "3.3.0"
+env_logger = "0.6"
+log = "0.4"
+stderrlog = "0.4.1"
+rosc = "0.1.6"
