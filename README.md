@@ -4,10 +4,10 @@
 
 ## TODO
 
-- [ ] Sensel Driver
+- [X] Sensel Driver
 - [ ] Test Sensel Driver
 - [ ] Add ~/$(HOME)/.muses/driver_init.json
 - [ ] Get Sensel presets from config
 - [ ] Lightpad Driver
-- [ ] Non status bar command line interface
+- [X] Non status bar command line interface
 - [ ] Document library interface
