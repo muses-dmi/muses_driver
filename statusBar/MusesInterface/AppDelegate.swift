@@ -65,7 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ aNotification: Notification) {
         // if device connected, then close down before quiting
         if connected {
-            
+            disconnect_rust();
         }
     }
 

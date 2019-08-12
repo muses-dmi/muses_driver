@@ -1,3 +1,11 @@
+
+//! Description: 
+//! TODO: 
+//!     Test Sensel Driver
+//!     Add ~/$(HOME)/.muses/driver_init.json
+//!     Get Sensel presets from config
+//!     ROLI Lightpad driver
+//! 
 //! Copyright © 2019 Benedict Gaster. All rights reserved.
 
 #![allow(dead_code)]
@@ -9,8 +17,7 @@
 
 #[macro_use]
 extern crate log;
-//extern crate env_logger;
-extern crate stderrlog;
+extern crate simple_logger;
 
 use serialport::prelude::*;
 use serialport::SerialPortType;
@@ -20,6 +27,12 @@ use std::time::{Duration, Instant};
 use std::sync::mpsc::{channel, Sender, Receiver};
 
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+
+use std::fs::File;
+use std::io::Read;
+
+extern crate muses_sensel;
+use muses_sensel::*;
 
 mod serial_device;
 mod transport;
@@ -45,7 +58,9 @@ const to_addr: &'static str = "127.0.0.1:8338";
 
 #[no_mangle]
 extern "C" fn init_rust() {
-    stderrlog::new().module(module_path!()).init().unwrap();
+    //stderrlog::new().module(module_path!()).init().unwrap();
+     simple_logger::init().unwrap();
+     info!("Muses Driver Rust Component initilaized");
 }
 
 #[no_mangle]
@@ -77,6 +92,9 @@ extern "C" fn connect_rust() {
         return;
     }
 
+    // TODO: add ~/$(HOME)/.muses/driver_init.json
+
+
     // create out going OSC thread, which receives events from the muses hardware
     let (osc_s, osc_r)    = channel();
 
@@ -86,7 +104,7 @@ extern "C" fn connect_rust() {
         Ok(transport) => {
             std::thread::Builder::new()
                 .spawn(move || {
-                    error!("OSC thread is running");
+                    info!("OSC thread is running");
                     
                     // increment LIVE_DRIVERS, to register us
                     LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
@@ -99,7 +117,7 @@ extern "C" fn connect_rust() {
                     // decrement LIVE_DRIVERS, to deregister us
                     LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                    error!("OSC thread is disconnected");
+                    info!("OSC thread is disconnected");
                 }).unwrap();
         }
         Err(s) => {
@@ -107,14 +125,14 @@ extern "C" fn connect_rust() {
         }
     }
 
-    // open Serial port on Arduino, buttons, and encoders
+    // Arduino, buttons, and encoders
 
     // select and open serial port, if no port found, then simple return
     if let Ok(ports) = serialport::available_ports() {
         for p in ports {
             // FIXME: allow user to select via JSON configure
             if p.port_name == "/dev/tty.usbmodem143401" { //"/dev/tty.usbmodem141401" {
-                error!("Opening serial port {}", p.port_name);
+                info!("Opening serial port {}", p.port_name);
 
                 let s = SerialPortSettings {
                     baud_rate: 9600,
@@ -125,14 +143,16 @@ extern "C" fn connect_rust() {
                     timeout: Duration::from_millis(1),
                 };
                 if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
+                    // be sure not to move send channel
+                    let oo = osc_s.clone();
                     std::thread::Builder::new()
                         .spawn(move || {
-                            error!("serial (Arduino) thread is running");
+                            info!("serial (Arduino) thread is running");
                             
                             // increment LIVE_DRIVERS, to register us
                             LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                            let s = serial_device::Serial::new(osc_s.clone(), serial);
+                            let s = serial_device::Serial::new(oo, serial);
                             
                             // run driver
                             serial_device::Serial::run(s);
@@ -140,7 +160,7 @@ extern "C" fn connect_rust() {
                             // decrement LIVE_DRIVERS to deregister us
                             LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                            error!("serial (Arduino) thread is disconnected");
+                            info!("serial (Arduino) thread is disconnected");
                         }).unwrap();
                     break;
                 }
@@ -155,7 +175,43 @@ extern "C" fn connect_rust() {
         return;
     }
 
-    // open sensel
+    // Sensel
+
+    // TODO: process JSON file(s) for Sensel presets from config
+    let mut data = String::new();
+    let mut f = 
+        File::open("/Users/br-gaster/dev/audio/muses_rust/external/github/svg_interface/examples/mpc.json")
+        .expect("Unable to JSON IR");
+    f.read_to_string(&mut data).expect("Unable to read string");
+
+    // be sure not to move send channel
+    let o_s = osc_s.clone();
+    std::thread::Builder::new()
+        .spawn(move || {
+            let interface = 
+                interface::InterfaceBuilder::new(data)
+                .build();
+
+            match interface {
+                Ok(interface) => {
+                
+                        info!("Sensel thread is running");
+                        
+                        // increment LIVE_DRIVERS, to register us
+                        LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+
+                        interface.run(150, o_s, &DISCONNECT);
+                        
+                        // decrement LIVE_DRIVERS to deregister us
+                        LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+
+                        info!("Sensel thread is disconnected");
+                },
+                Err(s) => {
+                    error!("ERROR: {}", s)
+                }
+            }
+        }).unwrap();
 
     // open ROLI lightpad
 }
