@@ -6,11 +6,15 @@ edition = "2018"
 
 [lib]
 name = "muses_driver"
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib", "rlib"]
+
+[[bin]]
+name = "muses_driver_cmd"
+path = "src/bin.rs"
 
 [dependencies]
 serialport = "3.3.0"
-env_logger = "0.6"
 log = "0.4"
-stderrlog = "0.4.1"
+simple_logger = "1.3.0"
 rosc = "0.1.6"
+muses_sensel = { path = "../muses_sensel" }

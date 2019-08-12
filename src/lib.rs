@@ -1,5 +1,11 @@
 
 //! Description: 
+//! 
+//!    This is a "C" only API designed to be called from a native OS host application. 
+//!    Currently this is tested with statusBar app, which is a Mac OS Swift application that runs as a native 
+//!    status bar app. 
+//! 
+//!    It should be straightforward to use this API on other OSes, but to this point no testing has been done.
 //! TODO: 
 //!     Test Sensel Driver
 //!     Add ~/$(HOME)/.muses/driver_init.json
@@ -57,14 +63,16 @@ const to_addr: &'static str = "127.0.0.1:8338";
 //------------------------------------------------------------------------------
 
 #[no_mangle]
-extern "C" fn init_rust() {
-    //stderrlog::new().module(module_path!()).init().unwrap();
+pub extern "C" fn init_rust() {
+     // logging is only enabled for debug build
+     //#[cfg(debug_assertions)]
      simple_logger::init().unwrap();
+
      info!("Muses Driver Rust Component initilaized");
 }
 
 #[no_mangle]
-extern "C" fn disconnect_rust() {
+pub extern "C" fn disconnect_rust() {
     // check if already connected, LIVE_DRIVERS would be zero if not
     if LIVE_DRIVERS.load( Ordering::SeqCst) == 0 {
         return;
@@ -85,7 +93,7 @@ extern "C" fn disconnect_rust() {
 
 #[no_mangle]
 /// call to connected to Muses instrument
-extern "C" fn connect_rust() {
+pub extern "C" fn connect_rust() {
 
     // check if already connected, LIVE_DRIVERS would be zero if not
     if LIVE_DRIVERS.load( Ordering::SeqCst) != 0 {
@@ -180,7 +188,7 @@ extern "C" fn connect_rust() {
     // TODO: process JSON file(s) for Sensel presets from config
     let mut data = String::new();
     let mut f = 
-        File::open("/Users/br-gaster/dev/audio/muses_rust/external/github/svg_interface/examples/mpc.json")
+        File::open("/Users/br-gaster/dev/audio/muses_rust/external/github/svg_interface/farm1.json")
         .expect("Unable to JSON IR");
     f.read_to_string(&mut data).expect("Unable to read string");
 
@@ -188,6 +196,7 @@ extern "C" fn connect_rust() {
     let o_s = osc_s.clone();
     std::thread::Builder::new()
         .spawn(move || {
+            // create an interface with the SVG JSON IR
             let interface = 
                 interface::InterfaceBuilder::new(data)
                 .build();
