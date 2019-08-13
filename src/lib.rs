@@ -25,6 +25,14 @@
 extern crate log;
 extern crate simple_logger;
 
+use std::env;
+
+#[macro_use]
+extern crate serde_derive;
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Value};
+
 use serialport::prelude::*;
 use serialport::SerialPortType;
 
@@ -54,12 +62,23 @@ static LIVE_DRIVERS: AtomicI32 = AtomicI32::new(0);
 
 //------------------------------------------------------------------------------
 
-/// UDP address that OSC messages are sent from
-const from_addr: &'static str = "127.0.0.1:8001";
+const muses_config: &'static str = "/.muses/config.json";
 
-/// UDP address that OSC messages are sent to
-const to_addr: &'static str = "127.0.0.1:8338";
+//------------------------------------------------------------------------------
 
+/// Muses configuration, read from JSON
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Config {
+    /// path to Sensel SVG IR
+    pub svg_ir_path: String,
+    /// project id of arduino
+    pub arduino_pid: i32,
+    /// UDP address that OSC messages are sent from
+    pub osc_from_addr: String,
+    /// UDP address that OSC messages are sent to
+    pub osc_to_addr: String,
+    //TODO: add more config parameters
+}
 //------------------------------------------------------------------------------
 
 #[no_mangle]
@@ -100,15 +119,28 @@ pub extern "C" fn connect_rust() {
         return;
     }
 
-    // TODO: add ~/$(HOME)/.muses/driver_init.json
+    // Read config file
+    // TODO: this is not portable to non POSIX systems
+    let config_path = format!("{}{}", env::var("HOME").expect("Failed to read $(HOME)"), muses_config);
+    let mut config = String::new();
+    let mut f = 
+        File::open(config_path)
+        .expect("Unable open config file");
+    f.read_to_string(&mut config).expect("Unable to read config file");
 
+    // Deserialize config
+    let config : Config  = serde_json::from_str(&config).expect("Invalid config file");
+
+    //--------------
+    // OSC producer
+    //--------------
 
     // create out going OSC thread, which receives events from the muses hardware
     let (osc_s, osc_r)    = channel();
 
     // from address 127.0.0.1:8001
     // to address 127.0.0.1:8338
-    match transport::Transport::new(from_addr, to_addr) {
+    match transport::Transport::new(&config.osc_from_addr[..], &config.osc_to_addr[..]) {
         Ok(transport) => {
             std::thread::Builder::new()
                 .spawn(move || {
@@ -133,49 +165,58 @@ pub extern "C" fn connect_rust() {
         }
     }
 
+    //-----------
     // Arduino, buttons, and encoders
+    //-----------
 
     // select and open serial port, if no port found, then simple return
     if let Ok(ports) = serialport::available_ports() {
         for p in ports {
             // FIXME: allow user to select via JSON configure
-            if p.port_name == "/dev/tty.usbmodem143401" { //"/dev/tty.usbmodem141401" {
-                info!("Opening serial port {}", p.port_name);
+            match (p.port_type) {
+                serialport::SerialPortType::UsbPort(usb_port) => {
+                    //println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
+                    //if p.port_name == config.arduino_serial_port { //"/dev/tty.usbmodem141401" {
+                    if usb_port.pid == config.arduino_pid as u16 {
+                        info!("Opening serial port {}", p.port_name);
 
-                let s = SerialPortSettings {
-                    baud_rate: 9600,
-                    data_bits: DataBits::Eight,
-                    flow_control: FlowControl::None,
-                    parity: Parity::None,
-                    stop_bits: StopBits::One,
-                    timeout: Duration::from_millis(1),
-                };
-                if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
-                    // be sure not to move send channel
-                    let oo = osc_s.clone();
-                    std::thread::Builder::new()
-                        .spawn(move || {
-                            info!("serial (Arduino) thread is running");
-                            
-                            // increment LIVE_DRIVERS, to register us
-                            LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                        let s = SerialPortSettings {
+                            baud_rate: 9600,
+                            data_bits: DataBits::Eight,
+                            flow_control: FlowControl::None,
+                            parity: Parity::None,
+                            stop_bits: StopBits::One,
+                            timeout: Duration::from_millis(1),
+                        };
+                        if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
+                            // be sure not to move send channel
+                            let oo = osc_s.clone();
+                            std::thread::Builder::new()
+                                .spawn(move || {
+                                    info!("serial (Arduino) thread is running");
+                                    
+                                    // increment LIVE_DRIVERS, to register us
+                                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                            let s = serial_device::Serial::new(oo, serial);
-                            
-                            // run driver
-                            serial_device::Serial::run(s);
-                            
-                            // decrement LIVE_DRIVERS to deregister us
-                            LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+                                    let s = serial_device::Serial::new(oo, serial);
+                                    
+                                    // run driver
+                                    serial_device::Serial::run(s);
+                                    
+                                    // decrement LIVE_DRIVERS to deregister us
+                                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                            info!("serial (Arduino) thread is disconnected");
-                        }).unwrap();
-                    break;
-                }
-                else {
-                    error!("Failed to open {}", p.port_name);
-                    return;
-                }
+                                    info!("serial (Arduino) thread is disconnected");
+                                }).unwrap();
+                            break;
+                        }
+                        else {
+                            error!("Failed to open {}", p.port_name);
+                            return;
+                        }
+                    }
+                },
+                _ => { }
             }
         }
     } else {
@@ -183,14 +224,16 @@ pub extern "C" fn connect_rust() {
         return;
     }
 
+    //-----------
     // Sensel
+    //-----------
 
-    // TODO: process JSON file(s) for Sensel presets from config
+    // Read SVG IR
     let mut data = String::new();
     let mut f = 
-        File::open("/Users/br-gaster/dev/audio/muses_rust/external/github/svg_interface/farm1.json")
-        .expect("Unable to JSON IR");
-    f.read_to_string(&mut data).expect("Unable to read string");
+        File::open(config.svg_ir_path)
+        .expect("Unable to open Sensel SVG JSON IR");
+    f.read_to_string(&mut data).expect("Unable to read string from Sensel SVG JSON");
 
     // be sure not to move send channel
     let o_s = osc_s.clone();
@@ -222,5 +265,7 @@ pub extern "C" fn connect_rust() {
             }
         }).unwrap();
 
-    // open ROLI lightpad
+    //--------------
+    // ROLI lightpad
+    //--------------
 }
