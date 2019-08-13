@@ -463,6 +463,8 @@
 				OTHER_LDFLAGS = (
 					"-L",
 					../target/debug,
+					"-L",
+					/usr/local/lib,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = uwe.MusesInterface;
 				PRODUCT_NAME = "$(TARGET_NAME)";
