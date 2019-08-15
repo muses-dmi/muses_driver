@@ -20,8 +20,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::transport::*;
 
+//------------------------------------------------------------------------------
+
 // Shared AtomicBool, when true listening threads should shutdown
 use crate::DISCONNECT;
+
+//------------------------------------------------------------------------------
 
 pub struct Osc {
     // channel to receive OSC packets from arduino, sensel, and lightpad on

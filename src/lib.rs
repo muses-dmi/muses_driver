@@ -51,6 +51,7 @@ use muses_sensel::*;
 mod serial_device;
 mod transport;
 mod osc;
+mod midi;
 
 //------------------------------------------------------------------------------
 
@@ -77,6 +78,10 @@ struct Config {
     pub osc_from_addr: String,
     /// UDP address that OSC messages are sent to
     pub osc_to_addr: String,
+    /// Optional MIDI port for mapped OSC messages
+    pub midi_port: Option<String>,
+    /// Optional MIDI mapping for mapped OSC messages
+    pub midi_mapping_path: Option<String>,
     //TODO: add more config parameters
 }
 //------------------------------------------------------------------------------
