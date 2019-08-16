@@ -67,6 +67,8 @@ It is possible to use the Rust
 - [X] Non status bar command line interface
 - [ ] Document library interface
 - [ ] Add error return code to connect_rust()
+- [X] Basic MAX patch for OSC to MIDI
+- [X] Arduino Sketch for XYZ buttons/encoders prototype
 
 #  <span style="color:#F3B73B">More Information</span>
 
