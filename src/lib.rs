@@ -117,7 +117,7 @@ pub extern "C" fn disconnect_rust() {
 
 #[no_mangle]
 /// call to connected to Muses instrument
-pub extern "C" fn connect_rust() {
+pub extern "C" fn connect_rust(sensel_only: bool) {
 
     // check if already connected, LIVE_DRIVERS would be zero if not
     if LIVE_DRIVERS.load( Ordering::SeqCst) != 0 {
@@ -174,59 +174,63 @@ pub extern "C" fn connect_rust() {
     // Arduino, buttons, and encoders
     //-----------
 
-    // select and open serial port, if no port found, then simple return
-    if let Ok(ports) = serialport::available_ports() {
-        for p in ports {
-            // FIXME: allow user to select via JSON configure
-            match (p.port_type) {
-                serialport::SerialPortType::UsbPort(usb_port) => {
-                    //println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
-                    //if p.port_name == config.arduino_serial_port { //"/dev/tty.usbmodem141401" {
-                    if usb_port.pid == config.arduino_pid as u16 {
-                        info!("Opening serial port {}", p.port_name);
+    
+    // open serial port if not sensel_only
+    if !sensel_only  {
+        // select and open serial port, if no port found, then simple return,
+        if let Ok(ports) = serialport::available_ports() {
+            for p in ports {
+                // FIXME: allow user to select via JSON configure
+                match (p.port_type) {
+                    serialport::SerialPortType::UsbPort(usb_port) => {
+                        //println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
+                        //if p.port_name == config.arduino_serial_port { //"/dev/tty.usbmodem141401" {
+                        if usb_port.pid == config.arduino_pid as u16 {
+                            info!("Opening serial port {}", p.port_name);
 
-                        let s = SerialPortSettings {
-                            baud_rate: 9600,
-                            data_bits: DataBits::Eight,
-                            flow_control: FlowControl::None,
-                            parity: Parity::None,
-                            stop_bits: StopBits::One,
-                            timeout: Duration::from_millis(1),
-                        };
-                        if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
-                            // be sure not to move send channel
-                            let oo = osc_s.clone();
-                            std::thread::Builder::new()
-                                .spawn(move || {
-                                    info!("serial (Arduino) thread is running");
-                                    
-                                    // increment LIVE_DRIVERS, to register us
-                                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                            let s = SerialPortSettings {
+                                baud_rate: 9600,
+                                data_bits: DataBits::Eight,
+                                flow_control: FlowControl::None,
+                                parity: Parity::None,
+                                stop_bits: StopBits::One,
+                                timeout: Duration::from_millis(1),
+                            };
+                            if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
+                                // be sure not to move send channel
+                                let oo = osc_s.clone();
+                                std::thread::Builder::new()
+                                    .spawn(move || {
+                                        info!("serial (Arduino) thread is running");
+                                        
+                                        // increment LIVE_DRIVERS, to register us
+                                        LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                                    let s = serial_device::Serial::new(oo, serial);
-                                    
-                                    // run driver
-                                    serial_device::Serial::run(s);
-                                    
-                                    // decrement LIVE_DRIVERS to deregister us
-                                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+                                        let s = serial_device::Serial::new(oo, serial);
+                                        
+                                        // run driver
+                                        serial_device::Serial::run(s);
+                                        
+                                        // decrement LIVE_DRIVERS to deregister us
+                                        LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                                    info!("serial (Arduino) thread is disconnected");
-                                }).unwrap();
-                            break;
+                                        info!("serial (Arduino) thread is disconnected");
+                                    }).unwrap();
+                                break;
+                            }
+                            else {
+                                error!("Failed to open {}", p.port_name);
+                                return;
+                            }
                         }
-                        else {
-                            error!("Failed to open {}", p.port_name);
-                            return;
-                        }
-                    }
-                },
-                _ => { }
+                    },
+                    _ => { }
+                }
             }
+        } else {
+            error!("Error listing serial ports");
+            return;
         }
-    } else {
-        error!("Error listing serial ports");
-        return;
     }
 
     //-----------
