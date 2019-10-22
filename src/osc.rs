@@ -42,7 +42,7 @@ impl Osc {
         }
     }
 
-    pub fn run(mut self, transport: Transport) {
+    pub fn run(mut self, transport: &Transport) {
         // process osc messages, until disconnect request
         while !DISCONNECT.load(Ordering::SeqCst) {
             // set a timeout of 2secs, so we can check we are not supposed to exit

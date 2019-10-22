@@ -25,16 +25,25 @@ impl Transport {
                     .map_err(|_| "failed to open socket")))
     }
 
-    fn get_addr_from_arg(arg: &str) -> Result<SocketAddrV4, &'static str> {
+    pub fn get_addr_from_arg(arg: &str) -> Result<SocketAddrV4, &'static str> {
         match SocketAddrV4::from_str(arg) {
             Ok(addr) => Ok(addr),
             Err(_)   => Err("failed to create socket addr")
         }
     }
 
+    /// send using send address created with
     pub fn send(&self, packet: &OscPacket) -> Result<(), &'static str> {
         let msg_buf = encoder::encode(packet).unwrap();
         self.socket.send_to(&msg_buf, self.to_addr)
+            .and(Ok(()))
+            .map_err(|_| "failed to open socket")
+    }
+
+    /// send to a given address
+    pub fn send_to(&self, packet: &OscPacket, to_addr: SocketAddrV4) -> Result<(), &'static str> {
+        let msg_buf = encoder::encode(packet).unwrap();
+        self.socket.send_to(&msg_buf, to_addr)
             .and(Ok(()))
             .map_err(|_| "failed to open socket")
     }

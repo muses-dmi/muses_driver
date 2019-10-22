@@ -47,6 +47,7 @@ use std::io::Read;
 
 extern crate muses_sensel;
 use muses_sensel::*;
+use muses_sensel::sensel::*;
 
 mod serial_device;
 mod transport;
@@ -59,21 +60,23 @@ mod midi;
 pub static DISCONNECT: AtomicBool = AtomicBool::new(false);
 
 /// Globaly shared variable that tracks number of live (i.e. connected) drivers
-static LIVE_DRIVERS: AtomicI32 = AtomicI32::new(0);
+pub static LIVE_DRIVERS: AtomicI32 = AtomicI32::new(0);
 
 //------------------------------------------------------------------------------
 
-const muses_config: &'static str = "/.muses/config.json";
+pub const muses_config: &'static str = "/.muses/config.json";
 
 //------------------------------------------------------------------------------
 
 /// Muses configuration, read from JSON
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Config {
+pub struct Config {
     /// path to Sensel SVG IR
     pub svg_ir_path: String,
     /// project id of arduino
-    pub arduino_pid: i32,
+    pub serial_pid: i32,
+    /// baud rate for serial port
+    pub serial_baud: u32,
     /// UDP address that OSC messages are sent from
     pub osc_from_addr: String,
     /// UDP address that OSC messages are sent to
@@ -157,7 +160,7 @@ pub extern "C" fn connect_rust(sensel_only: bool) {
                     let s = osc::Osc::new(osc_r);
                     
                     // run driver
-                    s.run(transport);
+                    s.run(&transport);
                     
                     // decrement LIVE_DRIVERS, to deregister us
                     LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
@@ -170,26 +173,33 @@ pub extern "C" fn connect_rust(sensel_only: bool) {
         }
     }
 
-    //-----------
-    // Arduino, buttons, and encoders
-    //-----------
+    // Read SVG IR
+    let mut data = String::new();
+    let mut f = 
+        File::open(config.svg_ir_path)
+        .expect("Unable to open Sensel SVG JSON IR");
+    f.read_to_string(&mut data).expect("Unable to read string from Sensel SVG JSON");
 
-    
-    // open serial port if not sensel_only
-    if !sensel_only  {
+    //-----------
+    // STM32/Arduino, buttons, and encoders, Sensel, ...
+    //-----------
+    let usb_sensel = false;
+
+    if !usb_sensel  {
         // select and open serial port, if no port found, then simple return,
+        
         if let Ok(ports) = serialport::available_ports() {
             for p in ports {
                 // FIXME: allow user to select via JSON configure
                 match (p.port_type) {
                     serialport::SerialPortType::UsbPort(usb_port) => {
-                        //println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
+                        println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
                         //if p.port_name == config.arduino_serial_port { //"/dev/tty.usbmodem141401" {
-                        if usb_port.pid == config.arduino_pid as u16 {
+                        if usb_port.pid == config.serial_pid as u16 {
                             info!("Opening serial port {}", p.port_name);
 
                             let s = SerialPortSettings {
-                                baud_rate: 9600,
+                                baud_rate: config.serial_baud,
                                 data_bits: DataBits::Eight,
                                 flow_control: FlowControl::None,
                                 parity: Parity::None,
@@ -201,20 +211,31 @@ pub extern "C" fn connect_rust(sensel_only: bool) {
                                 let oo = osc_s.clone();
                                 std::thread::Builder::new()
                                     .spawn(move || {
-                                        info!("serial (Arduino) thread is running");
-                                        
-                                        // increment LIVE_DRIVERS, to register us
-                                        LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                                        let interface = 
+                                            interface_direct::InterfaceBuilder::new(data)
+                                            .build();
 
-                                        let s = serial_device::Serial::new(oo, serial);
-                                        
-                                        // run driver
-                                        serial_device::Serial::run(s);
-                                        
-                                        // decrement LIVE_DRIVERS to deregister us
-                                        LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+                                        match interface {
+                                            Ok(interface) => {
+                                                info!("serial thread is running");
+                                                
+                                                // increment LIVE_DRIVERS, to register us
+                                                LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                                        info!("serial (Arduino) thread is disconnected");
+                                                let s = serial_device::Serial::new(interface, oo, serial);
+                                                
+                                                // run driver
+                                                serial_device::Serial::run(s);
+                                                
+                                                // decrement LIVE_DRIVERS to deregister us
+                                                LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+
+                                                info!("serial (Arduino) thread is disconnected");
+                                            },
+                                            Err(s) => {
+                                                error!("ERROR: {}", s)
+                                            }
+                                        }
                                     }).unwrap();
                                 break;
                             }
@@ -233,46 +254,46 @@ pub extern "C" fn connect_rust(sensel_only: bool) {
         }
     }
 
-    //-----------
-    // Sensel
-    //-----------
+    //----------------------------------------------------------
+    // Sensel via USB 
+    //----------------------------------------------------------
+    // let mut data = String::new();
+    // let mut f = 
+    //     File::open(config.svg_ir_path)
+    //     .expect("Unable to open Sensel SVG JSON IR");
+    // f.read_to_string(&mut data).expect("Unable to read string from Sensel SVG JSON");
 
-    // Read SVG IR
-    let mut data = String::new();
-    let mut f = 
-        File::open(config.svg_ir_path)
-        .expect("Unable to open Sensel SVG JSON IR");
-    f.read_to_string(&mut data).expect("Unable to read string from Sensel SVG JSON");
+    // // be sure not to move send channel
+    // if usb_sensel {
+    //     let o_s = osc_s.clone();
+    //     std::thread::Builder::new()
+    //         .spawn(move || {
+    //             // create an interface with the SVG JSON IR
+    //             let interface = 
+    //                 interface::InterfaceBuilder::new(data)
+    //                 .build();
 
-    // be sure not to move send channel
-    let o_s = osc_s.clone();
-    std::thread::Builder::new()
-        .spawn(move || {
-            // create an interface with the SVG JSON IR
-            let interface = 
-                interface::InterfaceBuilder::new(data)
-                .build();
+    //             match interface {
+    //                 Ok(interface) => {
+                    
+    //                         info!("Sensel thread is running");
+                            
+    //                         // increment LIVE_DRIVERS, to register us
+    //                         LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-            match interface {
-                Ok(interface) => {
-                
-                        info!("Sensel thread is running");
-                        
-                        // increment LIVE_DRIVERS, to register us
-                        LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+    //                         interface.run(150, o_s, &DISCONNECT);
+                            
+    //                         // decrement LIVE_DRIVERS to deregister us
+    //                         LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                        interface.run(150, o_s, &DISCONNECT);
-                        
-                        // decrement LIVE_DRIVERS to deregister us
-                        LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
-
-                        info!("Sensel thread is disconnected");
-                },
-                Err(s) => {
-                    error!("ERROR: {}", s)
-                }
-            }
-        }).unwrap();
+    //                         info!("Sensel thread is disconnected");
+    //                 },
+    //                 Err(s) => {
+    //                     error!("ERROR: {}", s)
+    //                 }
+    //             }
+    //         }).unwrap();
+    // }
 
     //--------------
     // ROLI lightpad
