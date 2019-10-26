@@ -46,7 +46,7 @@ extern crate muses_sensel;
 use muses_sensel::*;
 use muses_sensel::sensel::*;
 
-mod serial_device;
+mod orac_serial_device;
 mod transport;
 mod transport_rec;
 mod osc;
@@ -72,15 +72,17 @@ use orac_term_display::*;
 
 use crate::LIVE_DRIVERS;
 
-const ORAC_SEND_ADDR: &'static str = "127.0.0.1:6100";
+// need to move to config
+const ORAC_SEND_ADDR: &'static str = "192.168.2.2:6100"; //"127.0.0.1:6100";
 const ORAC_SEND_PORT: i32 = 6101;
-const ORAC_RECEIVE_ADDR: &'static str = "127.0.0.1:6101";
+const ORAC_RECEIVE_ADDR: &'static str = "192.168.2.1:6101"; // ""192.168.2.2:6101";
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
 
     let mut opts = Options::new();
-    opts.optflag("", "sensel-only", "Only run sensel driver not full muses instrument");
+    opts.optflag("i", "interface", "Use termimal interface");
+    opts.optflag("", "pi", "Use Statis PI with PiSound for Orac");
     opts.optflag("h", "help", "print this help menu");
 
     let matches = match opts.parse(&args[1..]) {
@@ -96,16 +98,18 @@ pub fn main() {
         .unwrap();
     
     info!("Muses ORAC Driver Rust Component initilaized");
-    
+
     // connect to xyz
-    //muses_driver::connect_rust(matches.opt_present("sensel-only"));
-    let (osc_r, osc_s) = connecting();
+    let (osc_r, osc_s) = connecting(matches.opt_present("pi"));
 
-    display(osc_r, osc_s);
-
-    // println!("Press Enter to exit driver");
-    // let mut input = String::new();
-    // stdin().read_line(&mut input).unwrap();
+    if matches.opt_present("interface") {
+        display(osc_r, osc_s);
+    }
+    else {
+        println!("Press Enter to exit driver");
+        let mut input = String::new();
+        stdin().read_line(&mut input).unwrap();
+    }
 
     // disconnect from xyz
     muses_driver::disconnect_rust();
@@ -113,7 +117,7 @@ pub fn main() {
     // close down driver
 }
 
-pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
+pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
 
     // check if already connected, LIVE_DRIVERS would be zero if not
     // if LIVE_DRIVERS.load( Ordering::SeqCst) != 0 {
@@ -132,6 +136,19 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
     // Deserialize config
     let config : Config  = serde_json::from_str(&config).expect("Invalid config file");
 
+    let mut from_addr: String = config.osc_from_addr.clone();
+    let mut to_addr: String = config.osc_to_addr.clone();
+    let mut orac_send_addr: String = config.orac_send_addr.clone();
+    let mut orac_receive_addr: String = config.orac_receive_addr.clone();
+    let orac_send_port: i32 = config.orac_send_port;
+
+    if (using_pi) {
+        from_addr = config.osc_pi_from_addr.clone();
+        to_addr = config.osc_to_addr.clone();
+        orac_send_addr = config.orac_pi_send_addr.clone();
+        orac_receive_addr = config.orac_pi_receive_addr.clone();
+    }
+
     //--------------
     // OSC receiver
     //--------------
@@ -139,7 +156,7 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
     // create out going OSC thread, which receives events from MEC
     let (osc_rec_s, osc_rec_r)    = channel();
     let osc_rec_s_copy    = osc_rec_s.clone();
-    match transport_rec::Transport::new(ORAC_RECEIVE_ADDR, osc_rec_s) {
+    match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s) {
         Ok(transport) => {
             std::thread::Builder::new()
                 .spawn(move || {
@@ -168,10 +185,11 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
     // create out going OSC thread, which receives events from the muses hardware
     let (osc_s, osc_r)    = channel();
     let osc_s_return      = osc_s.clone();
+    let orac_receive_addr_clone = orac_receive_addr.clone();
 
     // from address 127.0.0.1:8001
     // to address 127.0.0.1:8338
-    match transport::Transport::new(&config.osc_from_addr[..], ORAC_SEND_ADDR) {
+    match transport::Transport::new(&from_addr[..], &orac_send_addr[..]) {
         Ok(transport) => {
             std::thread::Builder::new()
                 .spawn(move || {
@@ -184,7 +202,7 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
                     transport.send(
                         &OscPacket::Message(OscMessage {
                             addr: "/Connect".to_string(),
-                            args: Some(vec![OscType::Int(ORAC_SEND_PORT)]),
+                            args: Some(vec![OscType::Int(orac_send_port)]),
                         }));
                         //transport::Transport::get_addr_from_arg(ORAC_RECEIVE_ADDR).unwrap());
 
@@ -199,7 +217,7 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
                             addr: "/terminate".to_string(),
                             args: None,
                         }),
-                    transport::Transport::get_addr_from_arg(ORAC_RECEIVE_ADDR).unwrap());
+                    transport::Transport::get_addr_from_arg(&orac_receive_addr_clone[..]).unwrap());
                     
                     // decrement LIVE_DRIVERS, to deregister us
                     LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
@@ -229,7 +247,7 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
             // FIXME: allow user to select via JSON configure
             match (p.port_type) {
                 serialport::SerialPortType::UsbPort(usb_port) => {
-                    println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
+                    //println!("{:?} {:?} {:?}", usb_port.manufacturer, usb_port.product, usb_port.pid);
                     //if p.port_name == config.arduino_serial_port { //"/dev/tty.usbmodem141401" {
                     if usb_port.pid == config.serial_pid as u16 {
                         info!("Opening serial port {}", p.port_name);
@@ -245,6 +263,31 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
                         if let Ok(serial) = serialport::open_with_settings(&p.port_name, &s) {
                             // be sure not to move send channel
                             let oo = osc_s.clone();
+
+                            // we want to pass the serial port into the OSC rec
+                            let mut serial_for_write = serial.try_clone().expect("Failed to clone");
+                            // match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s) {
+                            //     Ok(transport) => {
+                            //         std::thread::Builder::new()
+                            //             .spawn(move || {
+                            //                 info!("ORAC RECEIVE thread is running");
+                                            
+                            //                 // increment LIVE_DRIVERS, to register us
+                            //                 LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                                            
+                            //                 transport.run();
+
+                            //                 // decrement LIVE_DRIVERS, to deregister us
+                            //                 LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+
+                            //                 info!("ORAC RECEIVE is disconnected");
+                            //             }).unwrap();
+                            //     },
+                            //     Err(s) => {
+                            //         error!("ERROR ORAC RECEIVE: {}", s)
+                            //     }
+                            // }
+
                             std::thread::Builder::new()
                                 .spawn(move || {
                                     let interface = 
@@ -258,10 +301,10 @@ pub fn connecting() -> (Receiver<OscPacket>, Sender<OscPacket>) {
                                             // increment LIVE_DRIVERS, to register us
                                             LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                                            let s = serial_device::Serial::new(interface, oo, serial);
+                                            let s = orac_serial_device::Serial::new(interface, oo, serial);
                                             
                                             // run driver
-                                            serial_device::Serial::run(s);
+                                            orac_serial_device::Serial::run(s);
                                             
                                             // decrement LIVE_DRIVERS to deregister us
                                             LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);

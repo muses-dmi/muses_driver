@@ -1,6 +1,6 @@
 //! Description: 
 //! 
-//! Simple terminal display for ORAC
+//! Simple terminal (using termion) display for ORAC
 //! 
 //! Mostly intended for debugging, but can be used to inspect ORAC controls.
 //! 
@@ -43,14 +43,20 @@ const NUM_CONTROLLERS: usize = 8;
 
 // properties for individual controllers
 struct Controller {
+    /// text description 
     pub desc: String,
+    /// position of controller in terminal display
     pub pos: (u16, u16),
+    /// string representation of the controllers value
     pub value: String,
+    /// actual controller value, between (0,1]
     pub control: f32,
 }
 
 impl Controller {
+    /// initalize a new controller
     pub fn new(pos: (u16, u16) ) -> Self {
+        // initial values are sent from MEC, so we just choose a default
         Controller {
             desc: "".to_string(),
             pos: pos,
@@ -59,6 +65,7 @@ impl Controller {
         }
     }
 
+    /// display controller to terminal
     pub fn display<W: Write>(&self, mut stdout : &mut termion::raw::RawTerminal<W>) {
         if self.desc.len() > 0 {
             write!(*stdout,
@@ -72,6 +79,7 @@ impl Controller {
         }
     }
 
+    /// reset controll to initial state
     pub fn reset(&mut self) {
         self.desc    = "".to_string();
         self.value   = "".to_string();
@@ -79,23 +87,23 @@ impl Controller {
     }
 }
 
+/// extract a string from 1st OSC argument, fallback ""
 pub fn osc_string(msg: &OscMessage) -> String {
     if let Some(vec) = &msg.args {
         if let OscType::String(value) = &vec[0] {
             return value.clone();
         }
     }
-
     "".to_string()
 }
 
+/// extract a float from 1st OSC argument, fallback 0.0
 pub fn osc_float(msg: &OscMessage) -> f32 {
     if let Some(vec) = &msg.args {
         if let OscType::Float(value) = &vec[0] {
             return *value;
         }
     }
-
     0.0
 }
 
@@ -112,7 +120,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
     let mut stdin = async_stdin().bytes();
 
     write!(stdout,
-           "{}{}{}{}{}{}Muses xyz for OARC█{}",
+           "{}{}{}{}{}{}Muses xyz for OARC{}",
            termion::cursor::Hide,
            termion::color::Bg(termion::color::Rgb(RGB_BACKGROUND.0, RGB_BACKGROUND.1, RGB_BACKGROUND.2)),
            color::Fg(color::Rgb(RGB_FOREGROUND.0, RGB_FOREGROUND.1, RGB_FOREGROUND.2)),
@@ -162,8 +170,8 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                 osc_sender.send(packet).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
-                        module   = "".to_string();
-                        page   = "".to_string();
+                        module.clear();
+                        page.clear();
                         write!(stdout,
                             "{}{}{}{}Muses xyz for OARC",
                             termion::color::Bg(termion::color::Rgb(RGB_BACKGROUND.0, RGB_BACKGROUND.1, RGB_BACKGROUND.2)),
@@ -182,8 +190,8 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                 osc_sender.send(packet).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
-                        module = "".to_string();
-                        page   = "".to_string();
+                        module.clear();
+                        page.clear();
                         write!(stdout,
                             "{}{}{}{}Muses xyz for OARC",
                             termion::color::Bg(termion::color::Rgb(RGB_BACKGROUND.0, RGB_BACKGROUND.1, RGB_BACKGROUND.2)),
@@ -204,7 +212,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                 osc_sender.send(packet).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
-                        page   = "".to_string();
+                        page.clear();
                         write!(stdout,
                             "{}{}{}{}Muses xyz for OARC",
                             termion::color::Bg(termion::color::Rgb(RGB_BACKGROUND.0, RGB_BACKGROUND.1, RGB_BACKGROUND.2)),
@@ -223,7 +231,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                 osc_sender.send(packet).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
-                        page   = "".to_string();
+                        page.clear();
                         write!(stdout,
                             "{}{}{}{}Muses xyz for OARC",
                             termion::color::Bg(termion::color::Rgb(RGB_BACKGROUND.0, RGB_BACKGROUND.1, RGB_BACKGROUND.2)),

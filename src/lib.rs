@@ -81,6 +81,20 @@ pub struct Config {
     pub osc_from_addr: String,
     /// UDP address that OSC messages are sent to
     pub osc_to_addr: String,
+    
+    /// ORAC/MEC send address for OSC messages
+    pub orac_send_addr: String,
+    /// ORAC/MEC send port
+    pub orac_send_port: i32,
+    /// ORAC/MEC incoming address for OSC messages, if not using static PI
+    pub orac_receive_addr: String,
+
+    /// Our static IP address if using PI 
+    pub osc_pi_from_addr: String,
+    /// ORAC/MEC out going address for OSC messages, if using static PI
+    pub orac_pi_send_addr: String,
+    /// ORAC?MEC incomming address for OSC meesages, i using static PI
+    pub orac_pi_receive_addr: String,
     /// Optional MIDI port for mapped OSC messages
     pub midi_port: Option<String>,
     /// Optional MIDI mapping for mapped OSC messages
