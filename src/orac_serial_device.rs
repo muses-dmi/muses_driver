@@ -49,6 +49,8 @@ use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use muses_sensel::*;
+use super::osc_utils::*;
+use super::transport::*;
 
 // Shared AtomicBool, when true listening threads should shutdown
 use crate::DISCONNECT;
@@ -60,6 +62,9 @@ const ENCODER_PREFIX: &'static str = "/e";
 const ENCODER_PREFIX_LENGTH: usize = 2;
 const ENCODER_NUM_OFFSET_START: usize = 3;
 const ENCODER_NUM_OFFSET_END: usize = 4;
+
+const KEY_PREFIX: &'static str = "/key";
+const KEY_PREFIX_LENGTH: usize = 4;
 
 struct Controller {
     value: i32,
@@ -104,8 +109,6 @@ impl Controller {
     }
 }
 
-
-
 pub struct Serial {
     inferface: interface_direct::InterfaceDirect,
     osc_sender: Sender<OscPacket>,
@@ -148,6 +151,17 @@ impl Serial {
 
     pub fn run(mut serial: Serial) {
         let mut serial_buf: Vec<u8> = vec![0; Serial::BUFFER_SIZE];
+
+        //let mut t = None;
+        match Transport::new("127.0.0.1:8011", "127.0.0.1:4000") {
+            Ok(mut transport) => {
+                
+        //     },
+        //     Err(s) => {
+        //         error!("ERROR Send to ORAC/PD: {}", s)
+        //     }
+        // }
+        //t.unwrap();
 
         // as noted above messages are a very simple fixed format:
         //
@@ -203,13 +217,26 @@ impl Serial {
                                     serial.controllers[index-1].inc(arg);
                                     serial.controllers[index-1].send(&serial.osc_sender);
                                 }
+                                else if  &address[..KEY_PREFIX_LENGTH] == KEY_PREFIX {
+                                    let arg2 = String::from_utf8_lossy(&message[2][..]).parse::<i32>().unwrap_or(0); 
+                                    let mut packet = OscPacket::Message(OscMessage {
+                                        addr: address,
+                                        args: Some(vec![OscType::Int(arg), OscType::Int(arg2)]),
+                                    });
+                                    transport.send(&packet);
+                                }
                                 else {                                
                                     // build and transmit packet
                                     let mut packet = OscPacket::Message(OscMessage {
                                         addr: address,
                                         args: Some(vec![OscType::Int(arg)]),
                                     });
+                                    // let mut packet = OscPacket::Message(OscMessage {
+                                    //     addr: "/key".to_string(),
+                                    //     args: Some(vec![OscType::Int(0), OscType::Int(1)]),
+                                    // });
                                     info!("{:?}", packet);
+                                    //transport.send(&packet);
                                     serial.osc_sender.send(packet).unwrap();
                                 }
                                     
@@ -236,6 +263,12 @@ impl Serial {
             }
         }
 
+        },
+            Err(s) => {
+                error!("ERROR Send to ORAC/PD: {}", s)
+            }
+        }
+
         // due to bug with revc_timeout panicing on OSC thread, we pass a fake packet to enable terminating that thread
         let mut fake_packet = OscPacket::Message(OscMessage {
             addr: "/fakepacket".to_string(),
@@ -247,19 +280,82 @@ impl Serial {
 
 
 pub struct SerialSend {
+    /// Handle to serial port for TX communication
     port: Box<dyn SerialPort>,
+    /// ORAC controller descriptions are stored here, and then conjoined with value to form outgoing message
+    desc: [String; 8],
 }
 
 impl SerialSend {
     pub fn new(port: Box<dyn SerialPort>) -> Self {
         SerialSend {
             port: port,
+            desc: [ "".to_string(), "".to_string(), "".to_string(), "".to_string(),
+                    "".to_string(), "".to_string(), "".to_string(), "".to_string() ]
         }
     }
 
-    pub fn send(&mut self, data: &str) {
-        let bytes = data.as_bytes();
-        self.port.write(bytes)
-            .expect("Failed to write to serial port");
+    /// send module/page and controller data to muses xyx hardware for OLED display
+    pub fn send(&mut self, packet: &OscPacket) {
+        //let addr = 
+        let mut d = "".to_string();
+        match packet {
+            OscPacket::Message(msg) => {
+                match &msg.addr[..] {
+                    "/module"  => { d = "m".to_owned() + &osc_string(&msg) + &"\n"; },
+                    "/page"    => { d = "p".to_owned() + &osc_string(&msg) + &"\n"; },
+                    "/P1Desc"  => { 
+                        self.desc[0] = "1".to_owned() + &osc_string(&msg) + &" ";
+                        return;
+                    },
+                    "/P1Value" => { d = self.desc[0].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P2Desc"  => { 
+                        self.desc[1] = "2".to_owned() + &osc_string(&msg) + &" "; 
+                        return; 
+                    },
+                    "/P2Value" => { d = self.desc[1].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P3Desc"  => { 
+                        self.desc[2] = "3".to_owned() + &osc_string(&msg) + &" "; 
+                        return;
+                    },
+                    "/P3Value" => { d = self.desc[2].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P4Desc"  => { 
+                        self.desc[3] = "4".to_owned() + &osc_string(&msg) + &" ";
+                        return;
+                    },
+                    "/P4Value" => { d = self.desc[3].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P5Desc"  => { 
+                        self.desc[4] = "5".to_owned() + &osc_string(&msg) + &" "; 
+                        return; 
+                    },
+                    "/P5Value" => { d = self.desc[4].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P6Desc"  => { 
+                        self.desc[5] = "6 ".to_owned() + &osc_string(&msg) + &" "; 
+                        return; 
+                    },
+                    "/P6Value" => { d = self.desc[5].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P7Desc"  => { 
+                        self.desc[6] = "7".to_owned() + &osc_string(&msg) + &" "; 
+                        return;
+                    },
+                    "/P7Value" => { d = self.desc[6].clone() + &osc_string(&msg) + &"\n"; },
+                    "/P8Desc"  => { 
+                        self.desc[7] = "8".to_owned() + &osc_string(&msg) + &" "; 
+                        return; 
+                    },
+                    "/P8Value" => { d = self.desc[7].clone() + &osc_string(&msg) + &"\n"; },
+                    _ => {
+                        return;
+                    }
+                }
+            },
+            OscPacket::Bundle(_) => {
+                error!("{}", "no support OSC bundles");
+                return;
+            }
+        }
+        // now send message
+        self.port.write(d.as_bytes())
+                .expect("Failed to write to serial port");
     }
 }

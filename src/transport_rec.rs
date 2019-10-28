@@ -17,15 +17,21 @@ use std::time::Duration;
 use std::sync::atomic::{AtomicBool, Ordering};
 use crate::DISCONNECT;
 
-#[derive(Debug)]
+use super::orac_serial_device;
+
+//#[derive(Debug)]
 pub struct Transport {
     socket: UdpSocket,
     from_addr: SocketAddrV4,
     osc_sender: Sender<OscPacket>,
+    serial_send: orac_serial_device::SerialSend, 
 }
 
 impl Transport {
-    pub fn new(from_addr: &str, osc_sender: Sender<OscPacket>) -> Result<Self, &'static str> {
+    pub fn new(
+        from_addr: &str, 
+        osc_sender: Sender<OscPacket>,
+        serial_send: orac_serial_device::SerialSend) -> Result<Self, &'static str> {
         // let addr = match SocketAddrV4::from_str(from_addr) {
         //     Ok(addr) => addr,
         //     Err(_) => panic!("moo"),
@@ -52,7 +58,8 @@ impl Transport {
                     .and_then(|sock| Ok(Transport { 
                         socket: sock, 
                         from_addr: from_addr,
-                        osc_sender: osc_sender, }))
+                        osc_sender: osc_sender, 
+                        serial_send: serial_send,}))
                     .map_err(|_| "failed to open socket"))
     }
 
@@ -63,7 +70,7 @@ impl Transport {
         }
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         // timeout read every 3 secs to check quit
         //self.socket.set_read_timeout(Some(Duration::new(3, 0)));
         let mut buf = [0u8; rosc::decoder::MTU];
@@ -73,6 +80,7 @@ impl Transport {
                     //info!("Received packet with size {} from: {}", size, addr);
                     let packet = rosc::decoder::decode(&buf[..size]).unwrap();
                     Transport::info_packet(&packet);
+                    self.serial_send.send(&packet);
                     self.osc_sender.send(packet);
                 }
                 Err(e) => {

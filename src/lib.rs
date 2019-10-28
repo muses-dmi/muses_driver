@@ -88,13 +88,18 @@ pub struct Config {
     pub orac_send_port: i32,
     /// ORAC/MEC incoming address for OSC messages, if not using static PI
     pub orac_receive_addr: String,
+    /// ORAC PD address to receive key and other messages directly
+    pub pd_send_addr: String,
 
     /// Our static IP address if using PI 
     pub osc_pi_from_addr: String,
     /// ORAC/MEC out going address for OSC messages, if using static PI
     pub orac_pi_send_addr: String,
-    /// ORAC?MEC incomming address for OSC meesages, i using static PI
+    /// ORAC?MEC incomming address for OSC meesages, if using static PI
     pub orac_pi_receive_addr: String,
+    /// ORAC PD address to receive key and other messages directly, if using static PI
+    pub pd_pi_send_addr: String,
+
     /// Optional MIDI port for mapped OSC messages
     pub midi_port: Option<String>,
     /// Optional MIDI mapping for mapped OSC messages
@@ -244,7 +249,7 @@ pub extern "C" fn connect_rust(sensel_only: bool) {
                                                 // decrement LIVE_DRIVERS to deregister us
                                                 LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                                                info!("serial (Arduino) thread is disconnected");
+                                                info!("serial thread is disconnected");
                                             },
                                             Err(s) => {
                                                 error!("ERROR: {}", s)

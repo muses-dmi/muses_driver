@@ -47,12 +47,36 @@ impl Osc {
         while !DISCONNECT.load(Ordering::SeqCst) {
             // set a timeout of 2secs, so we can check we are not supposed to exit
             // hmm... there seems to be a bug that cause the timeout to panic (see #39364)
-            match self.osc_reciver.recv() { //_timeout(Duration::from_secs(2)) {
+            match &self.osc_reciver.recv() { //_timeout(Duration::from_secs(2)) {
                 Ok(packet) => {
                     // workaround for panic bug, is to have serial thread send a FAKE packet
                     if DISCONNECT.load(Ordering::SeqCst) {
                         return;
                     }
+
+                    // // //let p = packet.clone();
+                    // match packet {
+                    //     OscPacket::Message(msg) => {
+                    //         if msg.addr == "/key".to_string() {
+                    //             //     //transport.send_to(&packet, Transport::get_addr_from_arg("127.0.0.1:6001").unwrap());
+                    //             //     return;
+                    //         }
+                    //         info!("here");
+                    //         return;
+                    // },
+
+                    //     //     // if msg.addr == "/key" {
+                    //     //     //     //transport.send_to(&packet, Transport::get_addr_from_arg("127.0.0.1:6001").unwrap());
+                    //     //     //     return;
+                    //     //     // }
+                    //     //     info!("here");
+                    //     //     return;
+                    //     // },
+                    //     // OscPacket::Bundle(bundle) => {
+                    //     //     println!("OSC Bundle: {:?}", bundle);
+                    //     // }
+                    //     _ => {}
+                    // }
                     transport.send(&packet);
                 },
                 Err(_)     => { }

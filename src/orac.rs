@@ -51,6 +51,7 @@ mod transport;
 mod transport_rec;
 mod osc;
 mod orac_term_display;
+mod osc_utils;
 
 extern crate getopts;
 use getopts::Options;
@@ -155,28 +156,28 @@ pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
 
     // create out going OSC thread, which receives events from MEC
     let (osc_rec_s, osc_rec_r)    = channel();
-    let osc_rec_s_copy    = osc_rec_s.clone();
-    match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s) {
-        Ok(transport) => {
-            std::thread::Builder::new()
-                .spawn(move || {
-                    info!("ORAC RECEIVE thread is running");
+    // let osc_rec_s_copy    = osc_rec_s.clone();
+    // match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s) {
+    //     Ok(transport) => {
+    //         std::thread::Builder::new()
+    //             .spawn(move || {
+    //                 info!("ORAC RECEIVE thread is running");
                     
-                    // increment LIVE_DRIVERS, to register us
-                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+    //                 // increment LIVE_DRIVERS, to register us
+    //                 LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
                     
-                    transport.run();
+    //                 transport.run();
 
-                    // decrement LIVE_DRIVERS, to deregister us
-                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+    //                 // decrement LIVE_DRIVERS, to deregister us
+    //                 LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                    info!("ORAC RECEIVE is disconnected");
-                }).unwrap();
-        },
-        Err(s) => {
-            error!("ERROR ORAC RECEIVE: {}", s)
-        }
-    }
+    //                 info!("ORAC RECEIVE is disconnected");
+    //             }).unwrap();
+    //     },
+    //     Err(s) => {
+    //         error!("ERROR ORAC RECEIVE: {}", s)
+    //     }
+    // }
 
     //--------------
     // OSC producer
@@ -189,46 +190,49 @@ pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
 
     // from address 127.0.0.1:8001
     // to address 127.0.0.1:8338
-    match transport::Transport::new(&from_addr[..], &orac_send_addr[..]) {
-        Ok(transport) => {
-            std::thread::Builder::new()
-                .spawn(move || {
-                    info!("OSC thread is running");
+    // match transport::Transport::new(&from_addr[..], &orac_send_addr[..]) {
+    //     Ok(transport) => {
+    //         std::thread::Builder::new()
+    //             .spawn(move || {
+    //                 info!("OSC thread is running");
 
-                    // increment LIVE_DRIVERS, to register us
-                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+    //                 // increment LIVE_DRIVERS, to register us
+    //                 LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
                     
-                    // Send /Connect to ORAC
-                    transport.send(
-                        &OscPacket::Message(OscMessage {
-                            addr: "/Connect".to_string(),
-                            args: Some(vec![OscType::Int(orac_send_port)]),
-                        }));
-                        //transport::Transport::get_addr_from_arg(ORAC_RECEIVE_ADDR).unwrap());
+    //                 let two = std::time::Duration::from_secs(2);
+    //                 std::thread::sleep(two);
 
-                    let s = osc::Osc::new(osc_r);
+    //                 // Send /Connect to ORAC
+    //                 transport.send(
+    //                     &OscPacket::Message(OscMessage {
+    //                         addr: "/Connect".to_string(),
+    //                         args: Some(vec![OscType::Int(orac_send_port)]),
+    //                     }));
+    //                     //transport::Transport::get_addr_from_arg(ORAC_RECEIVE_ADDR).unwrap());
 
-                    // run driver
-                    s.run(&transport);
+    //                 let s = osc::Osc::new(osc_r);
 
-                    // send message to OSC receiver thread to terminate
-                    transport.send_to(
-                        &OscPacket::Message(OscMessage {
-                            addr: "/terminate".to_string(),
-                            args: None,
-                        }),
-                    transport::Transport::get_addr_from_arg(&orac_receive_addr_clone[..]).unwrap());
+    //                 // run driver
+    //                 s.run(&transport);
+
+    //                 // send message to OSC receiver thread to terminate
+    //                 transport.send_to(
+    //                     &OscPacket::Message(OscMessage {
+    //                         addr: "/terminate".to_string(),
+    //                         args: None,
+    //                     }),
+    //                 transport::Transport::get_addr_from_arg(&orac_receive_addr_clone[..]).unwrap());
                     
-                    // decrement LIVE_DRIVERS, to deregister us
-                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+    //                 // decrement LIVE_DRIVERS, to deregister us
+    //                 LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
 
-                    info!("OSC thread is disconnected");
-                }).unwrap();
-        }
-        Err(s) => {
-            error!("ERROR: {}", s)
-        }
-    }
+    //                 info!("OSC thread is disconnected");
+    //             }).unwrap();
+    //     }
+    //     Err(s) => {
+    //         error!("ERROR: {}", s)
+    //     }
+    // }
 
     // Read SVG IR
     let mut data = String::new();
@@ -242,6 +246,8 @@ pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
     //-----------
     // select and open serial port, if no port found, then simple return,
     
+    let mut serial_for_write : Option<Box<dyn SerialPort>> = None;
+
     if let Ok(ports) = serialport::available_ports() {
         for p in ports {
             // FIXME: allow user to select via JSON configure
@@ -265,28 +271,8 @@ pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
                             let oo = osc_s.clone();
 
                             // we want to pass the serial port into the OSC rec
-                            let mut serial_for_write = serial.try_clone().expect("Failed to clone");
-                            // match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s) {
-                            //     Ok(transport) => {
-                            //         std::thread::Builder::new()
-                            //             .spawn(move || {
-                            //                 info!("ORAC RECEIVE thread is running");
-                                            
-                            //                 // increment LIVE_DRIVERS, to register us
-                            //                 LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
-                                            
-                            //                 transport.run();
-
-                            //                 // decrement LIVE_DRIVERS, to deregister us
-                            //                 LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
-
-                            //                 info!("ORAC RECEIVE is disconnected");
-                            //             }).unwrap();
-                            //     },
-                            //     Err(s) => {
-                            //         error!("ERROR ORAC RECEIVE: {}", s)
-                            //     }
-                            // }
+                            // so we create it once we have the serial port
+                            serial_for_write = Some(serial.try_clone().expect("Failed to clone"));
 
                             std::thread::Builder::new()
                                 .spawn(move || {
@@ -329,6 +315,72 @@ pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
         }
     } else {
         error!("Error listing serial ports");
+    }
+
+
+    let serial_send = orac_serial_device::SerialSend::new(serial_for_write.unwrap());
+    match transport_rec::Transport::new(&orac_receive_addr[..], osc_rec_s, serial_send) {
+        Ok(mut transport) => {
+            std::thread::Builder::new()
+                .spawn(move || {
+                    info!("ORAC RECEIVE thread is running");
+                    
+                    // increment LIVE_DRIVERS, to register us
+                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                    
+                    transport.run();
+
+                    // decrement LIVE_DRIVERS, to deregister us
+                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+
+                    info!("ORAC RECEIVE is disconnected");
+                }).unwrap();
+        },
+        Err(s) => {
+            error!("ERROR ORAC RECEIVE: {}", s)
+        }
+    }
+
+    // finally we create the out going OSC thread (that sends messages to MEC)
+    match transport::Transport::new(&from_addr[..], &orac_send_addr[..]) {
+        Ok(transport) => {
+            std::thread::Builder::new()
+                .spawn(move || {
+                    info!("OSC thread is running");
+
+                    // increment LIVE_DRIVERS, to register us
+                    LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
+                    
+                    // Send /Connect to ORAC
+                    transport.send(
+                        &OscPacket::Message(OscMessage {
+                            addr: "/Connect".to_string(),
+                            args: Some(vec![OscType::Int(orac_send_port)]),
+                        }));
+                        //transport::Transport::get_addr_from_arg(ORAC_RECEIVE_ADDR).unwrap());
+
+                    let s = osc::Osc::new(osc_r);
+
+                    // run driver
+                    s.run(&transport);
+
+                    // send message to OSC receiver thread to terminate
+                    transport.send_to(
+                        &OscPacket::Message(OscMessage {
+                            addr: "/terminate".to_string(),
+                            args: None,
+                        }),
+                    transport::Transport::get_addr_from_arg(&orac_receive_addr_clone[..]).unwrap());
+                    
+                    // decrement LIVE_DRIVERS, to deregister us
+                    LIVE_DRIVERS.fetch_add(-1, Ordering::SeqCst);
+
+                    info!("OSC thread is disconnected");
+                }).unwrap();
+        }
+        Err(s) => {
+            error!("ERROR: {}", s)
+        }
     }
 
     (osc_rec_r, osc_s_return)
