@@ -1,0 +1,19 @@
+{
+    "svg_ir_path" : "/Users/br-gaster/dev/audio/muses_rust/external/github/svg_interface/material_survey.json",
+    "serial_pid": 22336,
+    "serial_baud": 115200,
+    "osc_from_addr": "127.0.0.1:8001",
+    "osc_to_addr": "127.0.0.1:8338",
+
+    "orac_send_addr": "127.0.0.1:6100",
+    "orac_send_port": 6101,
+    "orac_receive_addr": "127.0.0.1:6101",
+    "pd_send_addr": "127.0.0.1:4000",
+
+    "osc_pi_from_addr": "192.168.2.1:8001",
+    "orac_pi_send_addr": "192.168.2.2:6100",
+    "orac_pi_receive_addr": "192.168.2.1:6101",
+    "pd_pi_send_addr": "192.168.2.1:4000",
+    
+    "midi_port": "IAC Driver Bus 1"
+}
