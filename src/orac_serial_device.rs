@@ -153,6 +153,7 @@ impl Serial {
         let mut serial_buf: Vec<u8> = vec![0; Serial::BUFFER_SIZE];
 
         //let mut t = None;
+        //match Transport::new("127.0.0.1:8011", "192.168.2.1:4000") {
         match Transport::new("127.0.0.1:8011", "127.0.0.1:4000") {
             Ok(mut transport) => {
                 
