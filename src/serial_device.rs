@@ -51,7 +51,7 @@ use crate::DISCONNECT;
 
 pub struct Serial {
     inferface: interface_direct::InterfaceDirect,
-    osc_sender: Sender<OscPacket>,
+    osc_sender: Sender<(OscPacket, Option<String>)>,
     port: Box<dyn SerialPort>,
 }
 
@@ -64,7 +64,7 @@ impl Serial {
     
     pub fn new(
             inferface: interface_direct::InterfaceDirect, 
-            osc: Sender<OscPacket>, 
+            osc: Sender<(OscPacket, Option<String>)>, 
             port: Box<dyn SerialPort>) -> Self {
         Serial {
             inferface: inferface,
@@ -136,7 +136,7 @@ impl Serial {
                                     args: Some(vec![OscType::Int(arg)]),
                                 });
                                 //info!("{:?}", packet);
-                                serial.osc_sender.send(packet).unwrap();
+                                serial.osc_sender.send((packet, None)).unwrap();
                                 
                             }
 
@@ -166,6 +166,6 @@ impl Serial {
             addr: "/fakepacket".to_string(),
             args: None,
         });
-        serial.osc_sender.send(fake_packet).unwrap();
+        serial.osc_sender.send((fake_packet, None)).unwrap();
     }
 }

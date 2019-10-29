@@ -118,7 +118,7 @@ pub fn main() {
     // close down driver
 }
 
-pub fn connecting(using_pi: bool) -> (Receiver<OscPacket>, Sender<OscPacket>) {
+pub fn connecting(using_pi: bool) -> (Receiver<(OscPacket, Option<String>)>, Sender<(OscPacket, Option<String>)>) {
 
     // check if already connected, LIVE_DRIVERS would be zero if not
     // if LIVE_DRIVERS.load( Ordering::SeqCst) != 0 {

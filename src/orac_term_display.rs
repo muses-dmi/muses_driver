@@ -110,7 +110,7 @@ pub fn osc_float(msg: &OscMessage) -> f32 {
 /// simple terminal display for ORAC
 /// osc_receiver is incoming OSC messages (from MEC)
 /// osc_sender is out going OSC messages (to MEC)
-pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>) {
+pub fn display(osc_receiver: Receiver<(OscPacket, Option<String>)>, osc_sender: Sender<(OscPacket, Option<String>)>) {
 
     let (x,y) = terminal_size().unwrap();
 
@@ -167,7 +167,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                     addr: "/ModuleNext".to_string(),
                                     args: Some(vec![OscType::Int(1)]),
                                 });
-                                osc_sender.send(packet).unwrap();
+                                osc_sender.send((packet, None)).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
                         module.clear();
@@ -187,7 +187,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                     addr: "/ModulePrev".to_string(),
                                     args: Some(vec![OscType::Int(1)]),
                                 });
-                                osc_sender.send(packet).unwrap();
+                                osc_sender.send((packet, None)).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
                         module.clear();
@@ -209,7 +209,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                     addr: "/PageNext".to_string(),
                                     args: Some(vec![OscType::Int(1)]),
                                 });
-                                osc_sender.send(packet).unwrap();
+                                osc_sender.send((packet, None)).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
                         page.clear();
@@ -228,7 +228,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
                                     addr: "/PagePrev".to_string(),
                                     args: Some(vec![OscType::Int(1)]),
                                 });
-                                osc_sender.send(packet).unwrap();
+                                osc_sender.send((packet, None)).unwrap();
 
                         controllers.iter_mut().map(|mut c| c.reset());
                         page.clear();
@@ -250,7 +250,7 @@ pub fn display(osc_receiver: Receiver<OscPacket>, osc_sender: Sender<OscPacket>)
         // handle any OSC input
         loop {
             match osc_receiver.try_recv() {
-                Ok (packet) => {
+                Ok ((packet, addr)) => {
                     match packet {
                         OscPacket::Message(msg) => {
                             match &msg.addr[..] {

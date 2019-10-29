@@ -23,14 +23,14 @@ use super::orac_serial_device;
 pub struct Transport {
     socket: UdpSocket,
     from_addr: SocketAddrV4,
-    osc_sender: Sender<OscPacket>,
+    osc_sender: Sender<(OscPacket, Option<String>)>,
     serial_send: orac_serial_device::SerialSend, 
 }
 
 impl Transport {
     pub fn new(
         from_addr: &str, 
-        osc_sender: Sender<OscPacket>,
+        osc_sender: Sender<(OscPacket, Option<String>)>,
         serial_send: orac_serial_device::SerialSend) -> Result<Self, &'static str> {
         // let addr = match SocketAddrV4::from_str(from_addr) {
         //     Ok(addr) => addr,
@@ -81,7 +81,7 @@ impl Transport {
                     let packet = rosc::decoder::decode(&buf[..size]).unwrap();
                     Transport::info_packet(&packet);
                     self.serial_send.send(&packet);
-                    self.osc_sender.send(packet);
+                    self.osc_sender.send((packet, None));
                 }
                 Err(e) => {
                     //error!("Error receiving from socket: {}", e);

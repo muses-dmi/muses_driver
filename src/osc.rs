@@ -29,14 +29,14 @@ use crate::DISCONNECT;
 
 pub struct Osc {
     // channel to receive OSC packets from arduino, sensel, and lightpad on
-    osc_reciver: Receiver<OscPacket>,
+    osc_reciver: Receiver<(OscPacket, Option<String>)>,
 }
 
 unsafe impl Send for Osc {
 }
 
 impl Osc {
-    pub fn new(osc_r: Receiver<OscPacket>) -> Self {
+    pub fn new(osc_r: Receiver<(OscPacket, Option<String>)>) -> Self {
         Osc {
             osc_reciver: osc_r,
         }
@@ -48,7 +48,7 @@ impl Osc {
             // set a timeout of 2secs, so we can check we are not supposed to exit
             // hmm... there seems to be a bug that cause the timeout to panic (see #39364)
             match &self.osc_reciver.recv() { //_timeout(Duration::from_secs(2)) {
-                Ok(packet) => {
+                Ok((packet, addr)) => {
                     // workaround for panic bug, is to have serial thread send a FAKE packet
                     if DISCONNECT.load(Ordering::SeqCst) {
                         return;
@@ -77,7 +77,12 @@ impl Osc {
                     //     // }
                     //     _ => {}
                     // }
-                    transport.send(&packet);
+                    if let Some(addr) = addr {
+                        transport.send_to(&packet, Transport::get_addr_from_arg(addr).unwrap());
+                    }
+                    else {
+                        transport.send(&packet);
+                    }
                 },
                 Err(_)     => { }
             }

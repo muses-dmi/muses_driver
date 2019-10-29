@@ -95,7 +95,7 @@ impl Controller {
         self.value = num::clamp(self.value, Controller::MIN_CONTROLLER_VALUE, Controller::MAX_CONTROLLER_VALUE);
     }
 
-    pub fn send(&self, osc_sender: &Sender<OscPacket>) {
+    pub fn send(&self, osc_sender: &Sender<(OscPacket, Option<String>)>) {
         let tmp = (self.value - Controller::MIN_CONTROLLER_VALUE) as f32 / 
                     (Controller::MAX_CONTROLLER_VALUE -  Controller::MIN_CONTROLLER_VALUE) as f32;
 
@@ -105,13 +105,15 @@ impl Controller {
                 args: Some(vec![OscType::Float(tmp)]),
             });
             info!("{:?}", packet);
-            osc_sender.send(packet).unwrap();
+            osc_sender.send((packet, None)).unwrap();
     }
 }
 
 pub struct Serial {
     inferface: interface_direct::InterfaceDirect,
-    osc_sender: Sender<OscPacket>,
+    /// OSC messages to be sent out with optional address
+    osc_sender: Sender<(OscPacket, Option<String>)>,
+    /// IP Addr to send direct to ORAC
     port: Box<dyn SerialPort>,
     controllers: [Controller; NUM_CONTROLLERS],
 }
@@ -125,7 +127,7 @@ impl Serial {
     
     pub fn new(
             inferface: interface_direct::InterfaceDirect, 
-            osc: Sender<OscPacket>, 
+            osc: Sender<(OscPacket, Option<String>)>, 
             port: Box<dyn SerialPort>) -> Self {
         Serial {
             inferface: inferface,
@@ -154,8 +156,8 @@ impl Serial {
 
         //let mut t = None;
         //match Transport::new("127.0.0.1:8011", "192.168.2.1:4000") {
-        match Transport::new("127.0.0.1:8011", "127.0.0.1:4000") {
-            Ok(mut transport) => {
+        // match Transport::new("127.0.0.1:8011", "127.0.0.1:4000") {
+        //     Ok(mut transport) => {
                 
         //     },
         //     Err(s) => {
@@ -218,13 +220,16 @@ impl Serial {
                                     serial.controllers[index-1].inc(arg);
                                     serial.controllers[index-1].send(&serial.osc_sender);
                                 }
+                                // handle /key messages as these are sent directly to orac and not via mec
                                 else if  &address[..KEY_PREFIX_LENGTH] == KEY_PREFIX {
                                     let arg2 = String::from_utf8_lossy(&message[2][..]).parse::<i32>().unwrap_or(0); 
                                     let mut packet = OscPacket::Message(OscMessage {
                                         addr: address,
                                         args: Some(vec![OscType::Int(arg), OscType::Int(arg2)]),
                                     });
-                                    transport.send(&packet);
+                                    //transport.send(&packet);
+                                    info!("{:?}", packet);
+                                    serial.osc_sender.send((packet, Some("127.0.0.1:4000".to_string()))).unwrap();
                                 }
                                 else {                                
                                     // build and transmit packet
@@ -238,7 +243,7 @@ impl Serial {
                                     // });
                                     info!("{:?}", packet);
                                     //transport.send(&packet);
-                                    serial.osc_sender.send(packet).unwrap();
+                                    serial.osc_sender.send((packet, None)).unwrap();
                                 }
                                     
                             }
@@ -264,18 +269,18 @@ impl Serial {
             }
         }
 
-        },
-            Err(s) => {
-                error!("ERROR Send to ORAC/PD: {}", s)
-            }
-        }
+        // },
+        //     Err(s) => {
+        //         error!("ERROR Send to ORAC/PD: {}", s)
+        //     }
+        // }
 
         // due to bug with revc_timeout panicing on OSC thread, we pass a fake packet to enable terminating that thread
         let mut fake_packet = OscPacket::Message(OscMessage {
             addr: "/fakepacket".to_string(),
             args: None,
         });
-        serial.osc_sender.send(fake_packet).unwrap();
+        serial.osc_sender.send((fake_packet, None)).unwrap();
     }
 }
 
