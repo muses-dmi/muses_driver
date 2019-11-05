@@ -25,6 +25,8 @@ extern crate simple_logger;
 #[macro_use]
 extern crate serde_derive;
 
+use std::net::{SocketAddrV4};
+
 use serde::{Deserialize, Serialize};
 use serde_json::{Value};
 
@@ -94,6 +96,7 @@ pub fn main() {
     //simple_logger::init().unwrap();
     stderrlog::new()
         .module(module_path!())
+        .module("muses_sensel::device::controllers")
         .verbosity(2)
         .init()
         .unwrap();
@@ -118,7 +121,8 @@ pub fn main() {
     // close down driver
 }
 
-pub fn connecting(using_pi: bool) -> (Receiver<(OscPacket, Option<String>)>, Sender<(OscPacket, Option<String>)>) {
+pub fn connecting(using_pi: bool) -> 
+                    (Receiver<(OscPacket, Option<SocketAddrV4>)>, Sender<(OscPacket, Option<SocketAddrV4>)>) {
 
     // check if already connected, LIVE_DRIVERS would be zero if not
     // if LIVE_DRIVERS.load( Ordering::SeqCst) != 0 {
@@ -141,12 +145,14 @@ pub fn connecting(using_pi: bool) -> (Receiver<(OscPacket, Option<String>)>, Sen
     let mut to_addr: String = config.osc_to_addr.clone();
     let mut orac_send_addr: String = config.orac_send_addr.clone();
     let mut orac_receive_addr: String = config.orac_receive_addr.clone();
+    let mut pd_send_addr = transport::Transport::get_addr_from_arg(&config.pd_send_addr).unwrap();
     let orac_send_port: i32 = config.orac_send_port;
 
     if (using_pi) {
         from_addr = config.osc_pi_from_addr.clone();
         to_addr = config.osc_to_addr.clone();
         orac_send_addr = config.orac_pi_send_addr.clone();
+        pd_send_addr = transport::Transport::get_addr_from_arg(&config.pd_pi_send_addr).unwrap();
         orac_receive_addr = config.orac_pi_receive_addr.clone();
     }
 
@@ -287,7 +293,8 @@ pub fn connecting(using_pi: bool) -> (Receiver<(OscPacket, Option<String>)>, Sen
                                             // increment LIVE_DRIVERS, to register us
                                             LIVE_DRIVERS.fetch_add(1, Ordering::SeqCst);
 
-                                            let s = orac_serial_device::Serial::new(interface, oo, serial);
+                                            let s = orac_serial_device::Serial::new(
+                                                interface, oo, pd_send_addr, serial);
                                             
                                             // run driver
                                             orac_serial_device::Serial::run(s);

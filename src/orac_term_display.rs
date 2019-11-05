@@ -6,6 +6,9 @@
 //! 
 //! Copyright © 2019 Benedict Gaster. All rights reserved.
 //! 
+
+use std::net::{SocketAddrV4};
+
 extern crate termion;
 use termion::terminal_size;
 
@@ -110,7 +113,9 @@ pub fn osc_float(msg: &OscMessage) -> f32 {
 /// simple terminal display for ORAC
 /// osc_receiver is incoming OSC messages (from MEC)
 /// osc_sender is out going OSC messages (to MEC)
-pub fn display(osc_receiver: Receiver<(OscPacket, Option<String>)>, osc_sender: Sender<(OscPacket, Option<String>)>) {
+pub fn display(
+    osc_receiver: Receiver<(OscPacket, Option<SocketAddrV4>)>, 
+    osc_sender: Sender<(OscPacket, Option<SocketAddrV4>)>) {
 
     let (x,y) = terminal_size().unwrap();
 

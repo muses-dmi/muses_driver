@@ -29,14 +29,14 @@ use crate::DISCONNECT;
 
 pub struct Osc {
     // channel to receive OSC packets from arduino, sensel, and lightpad on
-    osc_reciver: Receiver<(OscPacket, Option<String>)>,
+    osc_reciver: Receiver<(OscPacket, Option<SocketAddrV4>)>,
 }
 
 unsafe impl Send for Osc {
 }
 
 impl Osc {
-    pub fn new(osc_r: Receiver<(OscPacket, Option<String>)>) -> Self {
+    pub fn new(osc_r: Receiver<(OscPacket, Option<SocketAddrV4>)>) -> Self {
         Osc {
             osc_reciver: osc_r,
         }
@@ -77,8 +77,8 @@ impl Osc {
                     //     // }
                     //     _ => {}
                     // }
-                    if let Some(addr) = addr {
-                        transport.send_to(&packet, Transport::get_addr_from_arg(addr).unwrap());
+                    if let Some(a) = addr {
+                        transport.send_to(&packet, *a);
                     }
                     else {
                         transport.send(&packet);

@@ -32,6 +32,9 @@
 //! 
 //! Copyright © 2019 Benedict Gaster. All rights reserved.
 //! 
+
+use std::net::{UdpSocket, SocketAddrV4};
+
 extern crate serialport;
 extern crate num;
 
@@ -58,16 +61,31 @@ use crate::DISCONNECT;
 // ORAC/MEC currently supports a maximum of 8 controllers
 const NUM_CONTROLLERS: usize = 8;
 
+/// Prefix for encoder messages from MCU
 const ENCODER_PREFIX: &'static str = "/e";
 const ENCODER_PREFIX_LENGTH: usize = 2;
 const ENCODER_NUM_OFFSET_START: usize = 3;
 const ENCODER_NUM_OFFSET_END: usize = 4;
 
+/// Prefix of /key messages
 const KEY_PREFIX: &'static str = "/key";
 const KEY_PREFIX_LENGTH: usize = 4;
 
+/// Prefix for PD /knobs message
+const KNOBS_PREFIX: &'static str = "/knobs";
+const KNOBS_PREFIX_LENGTH: usize = 6;
+
+/// Prefix for /s Sensel messages
+const SENSEL_PREFIX: &'static str = "/s";
+const SENSEL_PREFIX_LENGTH: usize = 2;
+
+const SENSEL_MSG_LENGTH: usize = 5;
+
+/// ORAC Controllers, represented as controls on the Muses xyx
 struct Controller {
+    /// Integer than is maintained as representation of hardware and mapped to ORAC representation, which is (0,1]
     value: i32,
+    /// OSC Address messsage for outgoing messages to ORAC
     osc_address: String,
 }
 
@@ -85,17 +103,18 @@ impl Controller {
     #[inline(always)]
     pub fn inc(&mut self, value: i32) {
         if value < 0 {
-            self.value = self.value - 1*3;
+            self.value = self.value - 1;
         }
         else {
-            self.value = (self.value + 1*3);
+            self.value = (self.value + 1);
         }
 
         // clamp value
         self.value = num::clamp(self.value, Controller::MIN_CONTROLLER_VALUE, Controller::MAX_CONTROLLER_VALUE);
     }
 
-    pub fn send(&self, osc_sender: &Sender<(OscPacket, Option<String>)>) {
+    /// Send Controller message to ORAC/MEC
+    pub fn send(&self, osc_sender: &Sender<(OscPacket, Option<SocketAddrV4>)>) {
         let tmp = (self.value - Controller::MIN_CONTROLLER_VALUE) as f32 / 
                     (Controller::MAX_CONTROLLER_VALUE -  Controller::MIN_CONTROLLER_VALUE) as f32;
 
@@ -112,7 +131,9 @@ impl Controller {
 pub struct Serial {
     inferface: interface_direct::InterfaceDirect,
     /// OSC messages to be sent out with optional address
-    osc_sender: Sender<(OscPacket, Option<String>)>,
+    osc_sender: Sender<(OscPacket, Option<SocketAddrV4>)>,
+    /// IPv4 address to send OSC messages direct to ORAC PD patch
+    pd_send_addr: SocketAddrV4,
     /// IP Addr to send direct to ORAC
     port: Box<dyn SerialPort>,
     controllers: [Controller; NUM_CONTROLLERS],
@@ -123,15 +144,18 @@ unsafe impl Send for Serial {
 }
 
 impl Serial {
+    /// Buffer for incoming RX messages from hardware
     const BUFFER_SIZE: usize = 1000;
     
     pub fn new(
             inferface: interface_direct::InterfaceDirect, 
-            osc: Sender<(OscPacket, Option<String>)>, 
+            osc: Sender<(OscPacket, Option<SocketAddrV4>)>, 
+            orac_direct_addr: SocketAddrV4,
             port: Box<dyn SerialPort>) -> Self {
         Serial {
             inferface: inferface,
             osc_sender: osc,
+            pd_send_addr: orac_direct_addr,
             port: port,
             controllers: [
                 Controller::new("/P1Ctrl".to_string()), Controller::new("/P2Ctrl".to_string()), 
@@ -154,30 +178,24 @@ impl Serial {
     pub fn run(mut serial: Serial) {
         let mut serial_buf: Vec<u8> = vec![0; Serial::BUFFER_SIZE];
 
-        //let mut t = None;
-        //match Transport::new("127.0.0.1:8011", "192.168.2.1:4000") {
-        // match Transport::new("127.0.0.1:8011", "127.0.0.1:4000") {
-        //     Ok(mut transport) => {
-                
-        //     },
-        //     Err(s) => {
-        //         error!("ERROR Send to ORAC/PD: {}", s)
-        //     }
-        // }
-        //t.unwrap();
-
         // as noted above messages are a very simple fixed format:
         //
         //      "address int_argument\n"
         //
         // Sensel message has 6 arguments, including message header
-        let mut message: [Vec<u8>; 6] = [ Vec::new(), Vec::new(), Vec::new() , Vec::new() , Vec::new(), Vec::new() ];
+        // /key message has 2 arguments
+        // /b message has 1 argument
+        // /e message has 1 argument
+        let mut message: [Vec<u8>; 7] = [ Vec::new(), Vec::new(), 
+                                          Vec::new() , Vec::new(), 
+                                          Vec::new(), Vec::new(),
+                                          Vec::new() ];
         let mut index: usize = 0;
 
         // set timeout to 2 secs so we don't miss requests to disconnect
         serial.port.set_timeout(Duration::from_secs(2));
 
-        // process osc messages over serial, until disconnected request
+        // process osc messages over serial, until disconnect request
         while !DISCONNECT.load(Ordering::SeqCst) {
             match serial.port.read(serial_buf.as_mut_slice()) {
                 Ok(t) => {
@@ -188,14 +206,18 @@ impl Serial {
                         // end of message, so transmit
                         if *x as char == '\n' {
                             let address = String::from_utf8_lossy(&message[0][..]).to_string();
+                            
                             // sensel message
-                            if index == 5 {
+                            //if index == SENSEL_MSG_LENGTH {
+                            if  &address[..SENSEL_PREFIX_LENGTH] == SENSEL_PREFIX {
                                 let contact = sensel::contact::Contact {
                                     id: String::from_utf8_lossy(&message[1][..]).parse::<i32>().unwrap_or(0) as u8,
-                                    state: Serial::toState(String::from_utf8_lossy(&message[2][..]).parse::<i32>().unwrap_or(0) as u8),
+                                    state: Serial::toState(
+                                        String::from_utf8_lossy(&message[2][..]).parse::<i32>().unwrap_or(0) as u8),
                                     x: String::from_utf8_lossy(&message[3][..]).parse::<i32>().unwrap_or(0) as f32,
                                     y: String::from_utf8_lossy(&message[4][..]).parse::<i32>().unwrap_or(0) as f32,
-                                    total_force: String::from_utf8_lossy(&message[5][..]).parse::<i32>().unwrap_or(0) as f32,
+                                    total_force: String::from_utf8_lossy(
+                                                    &message[5][..]).parse::<i32>().unwrap_or(0) as f32,
                                     area: 0.0,
                                     ellipse: None,
                                     delta: None,
@@ -227,9 +249,40 @@ impl Serial {
                                         addr: address,
                                         args: Some(vec![OscType::Int(arg), OscType::Int(arg2)]),
                                     });
-                                    //transport.send(&packet);
                                     info!("{:?}", packet);
-                                    serial.osc_sender.send((packet, Some("127.0.0.1:4000".to_string()))).unwrap();
+                                    serial.osc_sender.send((packet, Some(serial.pd_send_addr))).unwrap();
+                                }
+                                // handle /knobs messages as these are sent directly to orac and not via mec
+                                else if  &address[..KNOBS_PREFIX_LENGTH] == KNOBS_PREFIX {
+                                    let arg2 = String::from_utf8_lossy(&message[2][..]).parse::<i32>().unwrap_or(0); 
+                                    let arg3 = String::from_utf8_lossy(&message[3][..]).parse::<i32>().unwrap_or(0); 
+                                    let arg4 = String::from_utf8_lossy(&message[4][..]).parse::<i32>().unwrap_or(0); 
+                                    let arg5 = String::from_utf8_lossy(&message[5][..]).parse::<i32>().unwrap_or(0); 
+                                    let arg6 = String::from_utf8_lossy(&message[6][..]).parse::<i32>().unwrap_or(0); 
+                                    
+                                    let value = if arg5 == 0 {
+                                        0
+                                    }
+                                    else {
+                                        1
+                                    };
+
+                                    let mut packet = OscPacket::Message(OscMessage {
+                                        addr: "/encbut".to_string(),
+                                        args: Some(vec![OscType::Int(value)]),
+                                    });
+
+                                    // let mut packet = OscPacket::Message(OscMessage {
+                                    //     addr: address,
+                                    //     args: Some(vec![OscType::Int(arg), 
+                                    //                     OscType::Int(arg2),
+                                    //                     OscType::Int(arg3),
+                                    //                     OscType::Int(arg4),
+                                    //                     OscType::Int(arg5),
+                                    //                     OscType::Int(arg6)]),
+                                    // });
+                                    info!("{:?}", packet);
+                                    serial.osc_sender.send((packet, Some(serial.pd_send_addr))).unwrap();
                                 }
                                 else {                                
                                     // build and transmit packet
@@ -237,15 +290,9 @@ impl Serial {
                                         addr: address,
                                         args: Some(vec![OscType::Int(arg)]),
                                     });
-                                    // let mut packet = OscPacket::Message(OscMessage {
-                                    //     addr: "/key".to_string(),
-                                    //     args: Some(vec![OscType::Int(0), OscType::Int(1)]),
-                                    // });
                                     info!("{:?}", packet);
-                                    //transport.send(&packet);
                                     serial.osc_sender.send((packet, None)).unwrap();
                                 }
-                                    
                             }
 
                             // setup for next message
@@ -254,7 +301,7 @@ impl Serial {
                             }
                             index = 0;
                         }
-                        // move to argument processing
+                        // move to argument processing or next argument
                         else if *x as char == ' ' {
                             index = index + 1;
                         }

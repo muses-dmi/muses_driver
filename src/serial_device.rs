@@ -31,6 +31,9 @@
 //! 
 extern crate serialport;
 
+
+use std::net::{SocketAddrV4};
+
 use std::sync::mpsc::{Sender};
 use std::io::{self, Write};
 use std::time::Duration;
@@ -51,7 +54,7 @@ use crate::DISCONNECT;
 
 pub struct Serial {
     inferface: interface_direct::InterfaceDirect,
-    osc_sender: Sender<(OscPacket, Option<String>)>,
+    osc_sender: Sender<(OscPacket, Option<SocketAddrV4>)>,
     port: Box<dyn SerialPort>,
 }
 
@@ -64,7 +67,7 @@ impl Serial {
     
     pub fn new(
             inferface: interface_direct::InterfaceDirect, 
-            osc: Sender<(OscPacket, Option<String>)>, 
+            osc: Sender<(OscPacket, Option<SocketAddrV4>)>, 
             port: Box<dyn SerialPort>) -> Self {
         Serial {
             inferface: inferface,
